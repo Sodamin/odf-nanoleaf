@@ -1,2 +1,2 @@
 # odf-nanoleaf
-Yet another DIY Nanoleaf project build pretty mush from scratch.
+Yet another DIY Nanoleaf project build pretty much from scratch.
