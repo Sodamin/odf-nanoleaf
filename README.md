@@ -1,6 +1,10 @@
 # odf-nanoleaf
 Yet another DIY Nanoleaf project build pretty much from scratch.
 
+As nice text: https://docs.google.com/document/d/1HfWAqw2fR39lzSXPO8kObfQgmLiZtyB7CPexv1W-NuA/edit?usp=sharing 
+
+Plain text:
+
 Yet another DIY Nanoleaf
 Goal:
 To create a Nanoleaf like LED wall light project from scratch using 3d printing, ESP32 programming as a command receiver, and a host server for controlling this and other devices.
