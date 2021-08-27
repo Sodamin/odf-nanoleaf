@@ -15,8 +15,8 @@ ledTest = True
 displayTest = False
 
 # Settings
-ssid = 'ZADataWLAN4861'
-password = '15988023277315659193'
+ssid = ''
+password = ''
 pinOutValue = 25
 numOfLEDPacks = 10
 standardPixelBrightness = 1.0
