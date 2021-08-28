@@ -19,15 +19,7 @@ initializeLights = True
 ledTest = False
 displayTest = False
 
-<<<<<<< HEAD
 # Other Settings
-=======
-# Settings
-ssid = ''
-password = ''
-pinOutValue = 25
-numOfLEDPacks = 10
->>>>>>> 719205c028b849196c1e291c8c09402c08d2e11d
 standardPixelBrightness = 1.0
 
 ###############################################################
