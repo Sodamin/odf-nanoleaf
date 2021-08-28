@@ -2,35 +2,40 @@ try:
   import usocket as socket
 except:
   import socket
-
 import time
-
 import gc
-gc.collect()
 
-# Script Routing
-connectNetwork = False
-initializeLights = True
-ledTest = True
-displayTest = False
+gc.collect() # Garbage Collector
 
 # Settings
-ssid = 'ZADataWLAN4861'
-password = '15988023277315659193'
-pinOutValue = 25
-numOfLEDPacks = 10
-standardPixelBrightness = 1.0
-tileArray = [[0,1,2],[3,4,5],[6,7,8],[9,10,11]]
+import config # Relevant Configs outsourced in config.py file
+pinOutValue = config.pinOutValue
+numOfLEDPacks = config.numOfLEDPacks
+tileArray = config.tileArray
 
-  
-# Light Functions
+# Script Routing
+connectNetwork = True
+initializeLights = True
+ledTest = False
+displayTest = False
+
+# Other Settings
+standardPixelBrightness = 1.0
+
+###############################################################
+################### Light Functions ###########################
+###############################################################
 
 def allToColor(R, G, B, brightness):
   pixels[0] = (255,255,255)
-  #pixels.fill((R, G, B))
+  R = int(R*brightness)
+  G = int(G*brightness)
+  B = int(B*brightness)
+  pixels.fill((R, G, B))
   pixels.write()     
   status = "Set all Colors to" + " R: " + str(R) + " G: " + str(G) + " B: " + str(B)
-
+ # print("colors Set")
+  #rainbow_cycle(10)
   return status
 
 def tilesToColor(tileNums, R, G, B, brightness):
@@ -60,14 +65,17 @@ def commandFromRequest(request):
     brightness = float(request[request.find('&brightness=')+12:request.find('&brightness=')+15])
   except:
     brightness = 1.0
-  command = {'mode': mode, 'R': R, 'G': G, 'B': B, 'brightness': brightness}
+  try:
+    speed = float(request[request.find('&speed=')+7:request.find('&speed=')+10])
+  except:
+    speed = 0
+  command = {'mode': mode, 'R': R, 'G': G, 'B': B, 'brightness': brightness, 'speed': speed}
   return(command)
 
 if initializeLights:
   from neopixel import NeoPixel
   from machine import Pin
 
-  led = Pin(2, Pin.OUT)
   pin = Pin(pinOutValue, Pin.OUT)
   pixels = NeoPixel(pin, numOfLEDPacks)
   if ledTest:
@@ -96,42 +104,17 @@ def color_chase(color, wait):
         pixels[i] = color
         time.sleep(wait)
         pixels.write()
-        time.sleep(0.5)
 
 
 def rainbow_cycle(wait):
   for rounds in range(50):
-    for j in range(255):
-        for i in range(numOfLEDPacks):
-            rc_index = (i * 256 // numOfLEDPacks) + j
+    for j in range(int(255/10)):
+        for i in range(89,numOfLEDPacks):
+            rc_index = (i * 256 // numOfLEDPacks) + j*10
             pixels[i] = wheel(rc_index & 255)
+        time.sleep(wait)
         pixels.write()
 
-if displayTest:
-  import machine, display, time, math, network, utime
-  print("Testing Display")
-  tft = display.TFT() 
-  tft.init(tft.ST7789,bgr=True,rot=tft.LANDSCAPE, miso=17,backl_pin=4,backl_on=1, mosi=19, clk=18, cs=5, dc=16)
-  tft.setwin(40,52,320,240)
-  tft.set_bg(tft.WHITE)
-  tft.clear()
-  text="Welcome to ODF-Nanoleaf"
-  tft.text(120-int(tft.textWidth(text)/2),10,text,tft.BLACK)
-  from machine import TouchPad, Pin
-  tIn2 = TouchPad(Pin(2))
-  tIn2.config(1000)
-  while True:
-    tIn2Touch = tIn2.read()
-    if (tIn2Touch < 1007):
-      tIn2TouchYN = True
-    else:
-      tIn2TouchYN = False
-    print(tIn2TouchYN)
-    if tIn2TouchYN:
-      text="Touch Detected - Start LEDs"
-      tft.text(120-int(tft.textWidth(text)/2),67-int(tft.fontSize()[1]/2+tft.fontSize()[1]+10),text,tft.BLACK)
-      break
-    time.sleep(1)
 
 RED = (255, 0, 0)
 YELLOW = (255, 150, 0)
@@ -142,28 +125,17 @@ PURPLE = (180, 0, 255)
 
 if ledTest:
   while True:
-    pixels.fill(RED)
-    pixels.write()
-    # Increase or decrease to change the speed of the solid color change.
-    time.sleep(1)
-    pixels.fill(GREEN)
-    pixels.write()
-    time.sleep(1)
-    pixels.fill(BLUE)
-    pixels.write()
-    time.sleep(1)
+    allToColor(255,255,255,1)
+    time.sleep(0.015)
+    allToColor(0,0,0,1)
+    time.sleep(0.015)
+    print("next cycle")
+    #rainbow_cycle(0)  # Increase the number to slow down the rainbow
 
-    color_chase(RED, 0.1)  # Increase the number to slow down the color chase
-    color_chase(YELLOW, 0.1)
-    color_chase(GREEN, 0.1)
-    color_chase(CYAN, 0.1)
-    color_chase(BLUE, 0.1)
-    color_chase(PURPLE, 0.1)
-
-    rainbow_cycle(0)  # Increase the number to slow down the rainbow
-
-
-if connectNetwork:
+if displayTest:
+  import display
+  display.test()
+if not connectNetwork:
   import network
   import esp
   
@@ -171,12 +143,15 @@ if connectNetwork:
   
   station = network.WLAN(network.STA_IF)
   station.active(True)
-  station.connect(ssid, password)
+  station.connect(config.credentials[0]["ssid"], config.credentials[0]["password"])
   while station.isconnected() == False:
     pass
   print('Connection successful')
   print(station.ifconfig())
 
+if connectNetwork:
+  import web
+  web.connect(config)
 
 def web_page_old():
   html = """<html><head> <title>ESP Web Server</title> <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -194,7 +169,6 @@ s.listen(5)
 
 
 
-
 while True:
   conn, addr = s.accept()
   print('Got a connection from %s' % str(addr))
@@ -203,10 +177,14 @@ while True:
   print('Content = %s' % request)
   command = commandFromRequest(request)
   if command['mode'] == 'setAll':
-    status = allToColor(command['R'], command['G'], command['B'], command['brightness'])
+    status = allToColor(command['R'], command['G'], command['B'], float(command['brightness']))
+  if command['mode'] == 'rainbow':
+    rainbow_cycle(1)#command['speed'])
+    status = 'rainbow'
   else:
-    print('Command not recognized. Please try commands like http://host/?mode=setAll&R=203&G=122&B=002&brightness=0.3')
-    conn.send(b'HTTP/1.1 200 OK\n')
+    print('Command not recognized. Please try commands like http://192.168.0.88/?mode=setAll&R=203&G=122&B=002&brightness=0.3')
+    status = 'no status'
+  conn.send(b'HTTP/1.1 200 OK\n')
   conn.send(b'Content-Type: text/html\n')
   conn.send(b'Status: ')
   conn.send(status)
